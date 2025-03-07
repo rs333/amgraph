@@ -1,0 +1,258 @@
+import 'package:amgraph/am_data.dart';
+import 'package:amgraph/sinusoid_widget.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
+
+class AmWidget extends StatefulWidget {
+  const AmWidget({super.key});
+
+  @override
+  State<AmWidget> createState() => _AmWidgetState();
+}
+
+class _AmWidgetState extends State<AmWidget> {
+  late AmData data;
+  static const _scaler = TextScaler.linear(1);
+
+  final _vmcontroller = TextEditingController();
+  final _fmcontroller = TextEditingController();
+  final _vccontroller = TextEditingController();
+  final _fccontroller = TextEditingController();
+
+  double lowFreq = 0;
+  double highFreq = 0;
+  void updateFreqs() {
+    lowFreq = data.fC - data.fM;
+    highFreq = data.fC + data.fM;
+  }
+
+  @override
+  void initState() {
+    data = AmData();
+    updateFreqs();
+    _vmcontroller.text = '${data.vM}';
+    _vmcontroller.addListener(() {
+      double val = 0;
+      try {
+        val = double.parse(_vmcontroller.text);
+      } catch (e) {
+        return;
+      }
+      setState(() {
+        data.vM = val;
+      });
+    });
+    _fmcontroller.text = '${data.fM}';
+    _fmcontroller.addListener(() {
+      double val = 0;
+      try {
+        val = double.parse(_fmcontroller.text);
+      } catch (e) {
+        return;
+      }
+      setState(() {
+        data.fM = val;
+        updateFreqs();
+      });
+    });
+    _vccontroller.text = '${data.vC}';
+    _vccontroller.addListener(() {
+      double val = 0;
+      try {
+        val = double.parse(_vccontroller.text);
+      } catch (e) {
+        return;
+      }
+      setState(() {
+        data.vC = val;
+      });
+    });
+    _fccontroller.text = '${data.fC}';
+    _fccontroller.addListener(() {
+      double val = 0;
+      try {
+        val = double.parse(_fccontroller.text);
+      } catch (e) {
+        return;
+      }
+      setState(() {
+        data.fC = val;
+        updateFreqs();
+      });
+    });
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      spacing: 5,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('Part 1: '),
+            IconButton(
+              icon: const Icon(Icons.play_arrow),
+              onPressed: () {},
+              tooltip: 'Run solution',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () {
+                setState(() {
+                  // Cleared puzzle from data
+                });
+              },
+              tooltip: 'Delete cached data',
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () async {
+                setState(() {
+                  // Pulled new Puzzle text
+                });
+              },
+              tooltip: 'Refresh puzzle text',
+            ),
+          ],
+        ),
+        SinusoidWidget(
+          data: data,
+          v_controller: _vmcontroller,
+          f_controller: _fmcontroller,
+          textScaler: _scaler,
+        ),
+        SinusoidWidget(
+          data: data,
+          v_controller: _vccontroller,
+          f_controller: _fccontroller,
+          signalName: 'carrier',
+          subscript: 'c',
+          textScaler: _scaler,
+        ),
+        Divider(),
+        // Math.tex(
+        //   'v_{am} (t)=[V_c + v_m(t)] cos(2\\pi f_c t )',
+        //   textScaleFactor: _scaler.scale(1.5),
+        // ),
+        Math.tex(
+          'v_{am} (t)=${data.vC} cos(2\\pi ${data.fC} ) + ${data.vM / 2} cos(2\\pi ${lowFreq} t)  + ${data.vM / 2} cos(2\\pi ${highFreq} t)',
+          textScaleFactor: _scaler.scale(1.5),
+        ),
+        Flexible(
+          child: CustomPaint(
+            painter: _AmPainter(data),
+            child: FractionallySizedBox(
+              widthFactor: 1.0,
+              heightFactor: 1.0,
+              child: SingleChildScrollView(
+                child: SelectableText("Text goes here."),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// class SinusoidWidget extends StatelessWidget {
+//   const SinusoidWidget({super.key, required this.data});
+
+//   final AmData data;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: [
+//         Math.tex(
+//           'v_m(t)=V_m cos(2\\pi f_m t + \\theta_m)=',
+//           textScaleFactor: 2,
+//         ),
+
+//         Flexible(child: Text('')),
+//         Flexible(
+//           fit: FlexFit.loose,
+//           child: TextField(
+//             // controller: _vmcontroller,
+//             decoration: InputDecoration(
+//               border: OutlineInputBorder(gapPadding: 0),
+//               contentPadding: EdgeInsets.all(data.v_m),
+//             ),
+//             // initialValue: '${data.v_m}',
+//             // textAlignVertical: TextAlignVertical.top,
+//             textAlign: TextAlign.right,
+//             style: TextStyle(fontSize: 24),
+//             onChanged: (value) {
+//               double val = 0;
+//               try {
+//                 val = double.parse(value);
+//               } catch (e) {
+//                 return;
+//               }
+//               // setState(() {
+//               //   data.v_m = val;
+//               // });
+//             },
+//           ),
+//         ),
+//         // Text('${data.v_m}',textScaleFactor: 2),
+//         Math.tex(' cos(2\\pi ', textScaleFactor: 2),
+//         Flexible(
+//           child: TextFormField(
+//             // controller: vmcontroller ,
+//             decoration: InputDecoration(
+//               border: OutlineInputBorder(gapPadding: 0),
+//               contentPadding: EdgeInsets.all(1),
+//             ),
+//             initialValue: '${data.f_m}',
+//             textAlignVertical: TextAlignVertical.top,
+//             textAlign: TextAlign.center,
+//             style: TextStyle(fontSize: 24),
+//           ),
+//         ),
+//         // Math.tex(' + ',textScaleFactor: 2,),
+//         // Text('${data.theta_m}',textScaleFactor: 2),
+//         Math.tex(' )', textScaleFactor: 2),
+//         Flexible(child: Text('')),
+//       ],
+//     );
+//   }
+// }
+
+class _AmPainter extends CustomPainter {
+  AmData data;
+  _AmPainter(this.data);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final redLine =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = const Color.fromARGB(50, 255, 0, 0);
+
+    final greenLine =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = const Color.fromARGB(50, 0, 255, 0);
+
+    for (double i = 0; i <= size.width; i += 10) {
+      Offset p1 = Offset(i, 0);
+      Offset p2 = Offset(i, size.height);
+      canvas.drawLine(p1, p2, greenLine);
+    }
+    for (double i = 0; i <= size.height; i += 10) {
+      Offset p1 = Offset(0, i);
+      Offset p2 = Offset(size.width, i);
+      canvas.drawLine(p1, p2, redLine);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
+  }
+}
