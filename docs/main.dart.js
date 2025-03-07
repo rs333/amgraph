@@ -39797,14 +39797,14 @@ n=new A.k(40,700)
 m=new A.k(40,160)
 l=new A.k(40,420)
 a3=a0.b
-a0.EG(a5,o,a4,s,a6,"v\u2098(t)="+A.l(a3.a)+" sin(2\u03c0"+A.l(a3.c)+" + "+A.l(a3.e)+")",a2,44100,920,160,11)
+a0.EG(a5,o,a4,s,a6,"v\u2098(t)="+A.l(a3.a)+" sin(2\u03c0"+A.l(a3.c)+"t + "+A.l(a3.e)+")",a2,44100,920,160,11)
 a0.afv(a5,o,a4,s,a6,1070,21)
-a0.EG(a5,o,a4,s,a6,"v\u208d(t)="+A.l(a3.b)+" sin(2\u03c0"+A.l(a3.d)+" + "+A.l(a3.f)+")",a2,44100,920,420,11)
+a0.EG(a5,o,a4,s,a6,"v\u208d(t)="+A.l(a3.b)+" sin(2\u03c0"+A.l(a3.d)+"t + "+A.l(a3.f)+")",a2,44100,920,420,11)
 k=a3.b
 j=a3.d
 i=A.l(a3.a/2)
 h=a3.c
-a0.EG(a5,o,a4,s,a6,"v\u2090\u2098(t)="+A.l(k)+" sin(2\u03c0 "+A.l(j)+" ) + "+i+" sin(2\u03c0 "+A.l(j-h)+"t)  + "+i+" sin(2\u03c0 "+A.l(j+h)+"t)",a2,44100,920,700,11)
+a0.EG(a5,o,a4,s,a6,"v\u2090\u2098(t)="+A.l(k)+" sin(2\u03c0 "+A.l(j)+"t) + "+i+" sin(2\u03c0 "+A.l(j-h)+"t)  + "+i+" sin(2\u03c0 "+A.l(j+h)+"t)",a2,44100,920,700,11)
 for(g=0;g<=a2;g+=0.000022675736961451248,l=b,m=c,n=a){f=g*a1/a2+40
 e=a3.a*Math.sin(6.283185307179586*a3.c*g+a3.e*3.141592653589793/180)
 d=Math.sin(6.283185307179586*a3.d*g+a3.f*3.141592653589793/180)
@@ -39830,7 +39830,7 @@ e.ar(a,new A.k(i-5,l))}else a.cu(h,g,a0);++k}for(i=-a7*10;i<=r;i+=10){s=a6+i
 h=new A.k(40,s)
 g=new A.k(n,s)
 if(B.i.aX(i,50)===0){a.cu(h,g,c)
-f=A.cb(d,A.atv().$1$fontStyle(B.bD),A.l(i/10))
+f=A.cb(d,A.atv().$1$fontStyle(B.bD),A.l(-i/10))
 e=new A.j1(f,B.eZ,B.ac,B.L.j(0,B.L)?new A.eG(1):B.L,d,d,d,d,B.ar,d)
 e.fo(o,20)
 e.ar(a,new A.k(10,s-9))}else a.cu(h,g,a0)}a.cu(new A.k(40,q),new A.k(40,p),b)
