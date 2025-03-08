@@ -1,16 +1,21 @@
 import 'package:amgraph/am_data.dart';
-import 'package:amgraph/range_text_input_formatter.dart';
+import 'package:amgraph/utils/range_text_input_formatter.dart';
 import 'package:flutter/material.dart';
 
-class SinusoidWidget extends StatelessWidget {
+typedef SinusoidChangedCallback =
+    void Function(double v, double f, double theta);
+
+void defaultChangeCallback(double v, double f, double theta) {}
+
+class SinusoidInputWidget extends StatefulWidget {
+  final SinusoidChangedCallback onChanged;
   static const _scaler = TextScaler.linear(1);
   static const _spacing = 5.0;
-  const SinusoidWidget({
+  const SinusoidInputWidget({
     super.key,
     required this.data,
-    required this.vController,
-    required this.fController,
-    required this.thetaController,
+    required this.initialValue,
+    this.onChanged = defaultChangeCallback,
     this.textScaler = _scaler,
     this.subscript = '\u2098',
     this.signalName = 'modulating',
@@ -22,15 +27,11 @@ class SinusoidWidget extends StatelessWidget {
     this.maxTheta = 360,
   });
 
-  final TextEditingController vController;
-  final TextEditingController fController;
-  final TextEditingController thetaController;
+  final Sinusoid initialValue;
   final TextScaler textScaler;
   final String subscript;
   final String signalName;
-
   final AmData data;
-
   final double minV;
   final double maxV;
   final double minF;
@@ -39,28 +40,68 @@ class SinusoidWidget extends StatelessWidget {
   final double maxTheta;
 
   @override
+  State<SinusoidInputWidget> createState() => _SinusoidInputWidgetState();
+}
+
+class _SinusoidInputWidgetState extends State<SinusoidInputWidget> {
+  final TextEditingController _vController = TextEditingController();
+  final TextEditingController _fController = TextEditingController();
+  final TextEditingController _thetaController = TextEditingController();
+  @override
+  void dispose() {
+    _vController.dispose();
+    _fController.dispose();
+    _thetaController.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    _vController.text = widget.initialValue.amplitude.toString();
+    _fController.text = widget.initialValue.frequency.toString();
+    _thetaController.text = widget.initialValue.phase.toString();
+    _vController.addListener(_onChanged);
+    _fController.addListener(_onChanged);
+    _thetaController.addListener(_onChanged);
+    super.initState();
+  }
+
+  void _onChanged() {
+    try {
+      double v = double.parse(_vController.text);
+      double f = double.parse(_fController.text);
+      double theta = double.parse(_thetaController.text);
+      widget.onChanged(v, f, theta);
+    } catch (e) {
+      return;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
-      spacing: _spacing * 2,
+      spacing: SinusoidInputWidget._spacing * 2,
       children: [
         Row(
-          spacing: _spacing,
+          spacing: SinusoidInputWidget._spacing,
           children: [
             Flexible(fit: FlexFit.tight, child: Text('')),
             Flexible(
               fit: FlexFit.loose,
               child: TextField(
-                controller: vController,
+                controller: _vController,
                 inputFormatters: [
-                  RangeTextInputFormatter(min: minV, max: maxV),
+                  RangeTextInputFormatter(min: widget.minV, max: widget.maxV),
                 ],
                 decoration: InputDecoration(
                   floatingLabelAlignment: FloatingLabelAlignment.start,
                   floatingLabelStyle: TextStyle(fontStyle: FontStyle.italic),
                   floatingLabelBehavior: FloatingLabelBehavior.always,
-                  helperText: 'The $signalName signal amplitude in volts.',
+                  helperText:
+                      'The ${widget.signalName} signal amplitude in volts.',
                   suffix: Text('V'),
-                  labelText: 'V$subscript ',
+                  labelText: 'V${widget.subscript} ',
                   border: OutlineInputBorder(gapPadding: 0),
                 ),
                 textAlign: TextAlign.right,
@@ -69,17 +110,18 @@ class SinusoidWidget extends StatelessWidget {
             Flexible(
               fit: FlexFit.loose,
               child: TextField(
-                controller: fController,
+                controller: _fController,
                 inputFormatters: [
-                  RangeTextInputFormatter(min: minF, max: maxF),
+                  RangeTextInputFormatter(min: widget.minF, max: widget.maxF),
                 ],
                 decoration: InputDecoration(
                   floatingLabelAlignment: FloatingLabelAlignment.start,
                   floatingLabelStyle: TextStyle(fontStyle: FontStyle.italic),
                   floatingLabelBehavior: FloatingLabelBehavior.always,
-                  helperText: 'The $signalName signal frequency in Hz.',
+                  helperText:
+                      'The ${widget.signalName} signal frequency in Hz.',
                   suffix: Text('Hz'),
-                  labelText: 'f$subscript ',
+                  labelText: 'f${widget.subscript} ',
                   border: OutlineInputBorder(gapPadding: 0),
                 ),
                 textAlign: TextAlign.right,
@@ -88,17 +130,20 @@ class SinusoidWidget extends StatelessWidget {
             Flexible(
               fit: FlexFit.loose,
               child: TextField(
-                controller: thetaController,
+                controller: _thetaController,
                 inputFormatters: [
-                  RangeTextInputFormatter(min: minTheta, max: maxTheta),
+                  RangeTextInputFormatter(
+                    min: widget.minTheta,
+                    max: widget.maxTheta,
+                  ),
                 ],
                 decoration: InputDecoration(
                   floatingLabelAlignment: FloatingLabelAlignment.start,
                   floatingLabelStyle: TextStyle(fontStyle: FontStyle.italic),
                   floatingLabelBehavior: FloatingLabelBehavior.always,
-                  helperText: 'The $signalName phase in degrees.',
+                  helperText: 'The ${widget.signalName} phase in degrees.',
                   suffix: Text('\u00b0'),
-                  labelText: '\u03b8$subscript ',
+                  labelText: '\u03b8${widget.subscript} ',
                   border: OutlineInputBorder(gapPadding: 0),
                 ),
                 textAlign: TextAlign.right,

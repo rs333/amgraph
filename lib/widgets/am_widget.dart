@@ -1,7 +1,6 @@
 import 'dart:math';
-
 import 'package:amgraph/am_data.dart';
-import 'package:amgraph/sinusoid_widget.dart';
+import 'package:amgraph/widgets/sinusoid_input_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
@@ -14,122 +13,13 @@ class AmWidget extends StatefulWidget {
   State<AmWidget> createState() => _AmWidgetState();
 }
 
-double inputFilter(double val, double lowLimit, double highLimit) {
-  if (val > highLimit) {
-    val = highLimit;
-  } else if (val < lowLimit) {
-    val = lowLimit;
-  }
-  return val;
-}
-
 class _AmWidgetState extends State<AmWidget> {
   late AmData data;
   static const _scaler = TextScaler.linear(1);
 
-  final _vmcontroller = TextEditingController();
-  final _fmcontroller = TextEditingController();
-  final _vccontroller = TextEditingController();
-  final _fccontroller = TextEditingController();
-  final _thetamcontroller = TextEditingController();
-  final _thetaccontroller = TextEditingController();
-
-  @override
-  void dispose() {
-    _vmcontroller.dispose();
-    _fmcontroller.dispose();
-    _vccontroller.dispose();
-    _fccontroller.dispose();
-    _thetamcontroller.dispose();
-    _thetaccontroller.dispose();
-    super.dispose();
-  }
-
-  double lowFreq = 0;
-  double highFreq = 0;
-  void updateFreqs() {
-    lowFreq = data.fC - data.fM;
-    highFreq = data.fC + data.fM;
-  }
-
   @override
   void initState() {
     data = AmData();
-    updateFreqs();
-    _vmcontroller.text = '${data.vM}';
-    _vmcontroller.addListener(() {
-      double val = 0;
-      try {
-        val = double.parse(_vmcontroller.text);
-      } catch (e) {
-        return;
-      }
-      setState(() {
-        data.vM = val;
-      });
-    });
-    _fmcontroller.text = '${data.fM}';
-    _fmcontroller.addListener(() {
-      double val = 0;
-      try {
-        val = double.parse(_fmcontroller.text);
-      } catch (e) {
-        return;
-      }
-      setState(() {
-        data.fM = val;
-        updateFreqs();
-      });
-    });
-    _vccontroller.text = '${data.vC}';
-    _vccontroller.addListener(() {
-      double val = 0;
-      try {
-        val = double.parse(_vccontroller.text);
-      } catch (e) {
-        return;
-      }
-      setState(() {
-        data.vC = val;
-      });
-    });
-    _fccontroller.text = '${data.fC}';
-    _fccontroller.addListener(() {
-      double val = 0;
-      try {
-        val = double.parse(_fccontroller.text);
-      } catch (e) {
-        return;
-      }
-      setState(() {
-        data.fC = val;
-        updateFreqs();
-      });
-    });
-    _thetaccontroller.text = '${data.thetaC}';
-    _thetaccontroller.addListener(() {
-      double val = 0;
-      try {
-        val = double.parse(_thetaccontroller.text);
-      } catch (e) {
-        return;
-      }
-      setState(() {
-        data.thetaC = val;
-      });
-    });
-    _thetamcontroller.text = '${data.thetaM}';
-    _thetamcontroller.addListener(() {
-      double val = 0;
-      try {
-        val = double.parse(_thetamcontroller.text);
-      } catch (e) {
-        return;
-      }
-      setState(() {
-        data.thetaM = val;
-      });
-    });
     super.initState();
   }
 
@@ -139,24 +29,36 @@ class _AmWidgetState extends State<AmWidget> {
       spacing: 5,
       children: [
         Text(""),
-        SinusoidWidget(
+        SinusoidInputWidget(
           data: data,
-          vController: _vmcontroller,
-          fController: _fmcontroller,
-          thetaController: _thetamcontroller,
+          initialValue: data.modulator,
+          onChanged: (v, f, theta) {
+            setState(() {
+              data.modulator.amplitude = v;
+              data.modulator.frequency = f;
+              data.modulator.phase = theta;
+            });
+          },
           textScaler: _scaler,
           maxF: 2000,
         ),
-        SinusoidWidget(
+        SinusoidInputWidget(
           data: data,
-          vController: _vccontroller,
-          fController: _fccontroller,
-          thetaController: _thetaccontroller,
+          initialValue: data.carrier,
+          onChanged: (v, f, theta) {
+            setState(() {
+              data.carrier.amplitude = v;
+              data.carrier.frequency = f;
+              data.carrier.phase = theta;
+            });
+          },
           signalName: 'carrier',
           subscript: 'c',
           textScaler: _scaler,
         ),
-        Math.tex('m = \\frac{${data.vM}}{${data.vC}} = ${data.vM / data.vC}'),
+        Math.tex(
+          'm = \\frac{${data.modulator.amplitude}}{${data.carrier.amplitude}} = ${data.modulator.amplitude / data.carrier.amplitude}',
+        ),
         Divider(),
         Expanded(
           child: SingleChildScrollView(
@@ -168,6 +70,33 @@ class _AmWidgetState extends State<AmWidget> {
                   child: CustomPaint(
                     size: Size(graphWidth, 1100),
                     painter: _AmPainter(data),
+                  ),
+                ),
+                Positioned(
+                  top: 30,
+                  left: 45,
+                  child: SelectableMath.tex(
+                    data.modulator.phase < 0
+                        ? 'v_m(t)=${data.modulator.amplitude} sin(2\u03c0${data.modulator.frequency} - ${-data.modulator.phase}°)'
+                        : 'v_m(t)=${data.modulator.amplitude} sin(2\u03c0${data.modulator.frequency} + ${data.modulator.phase}°)',
+                  ),
+                ),
+                Positioned(
+                  top: 290,
+                  left: 45,
+                  child: SelectableMath.tex(
+                    data.carrier.phase < 0
+                        ? 'v_c(t)=${data.carrier.amplitude} sin(2\u03c0${data.carrier.frequency}t - ${-data.carrier.phase}°)'
+                        : 'v_c(t)=${data.carrier.amplitude} sin(2\u03c0${data.carrier.frequency}t + ${data.carrier.phase}°)',
+                  ),
+                ),
+                Positioned(
+                  top: 290 + 280,
+                  left: 45,
+                  child: SelectableMath.tex(
+                    data.modulator.amplitude < 0
+                        ? 'v_{am}(t)=${data.carrier.amplitude} sin(2\u03c0 ${data.carrier.frequency}t) - ${-data.modulator.amplitude / 2} sin(2\u03c0 ${data.carrier.frequency - data.modulator.frequency}t) - ${-data.modulator.amplitude / 2} sin(2\u03c0 ${data.carrier.frequency + data.modulator.frequency}t)'
+                        : 'v_{am}(t)=${data.carrier.amplitude} sin(2\u03c0 ${data.carrier.frequency}t) + ${data.modulator.amplitude / 2} sin(2\u03c0 ${data.carrier.frequency - data.modulator.frequency}t)  + ${data.modulator.amplitude / 2} sin(2\u03c0 ${data.carrier.frequency + data.modulator.frequency}t)',
                   ),
                 ),
               ],
@@ -238,7 +167,6 @@ class _AmPainter extends CustomPainter {
       thickLine,
       thinLine,
       size,
-      'v\u2098(t)=${data.vM} sin(2\u03c0${data.fM} + ${data.thetaM})',
       stopT,
       sampleRate,
       minorTicPoints,
@@ -260,7 +188,6 @@ class _AmPainter extends CustomPainter {
       thickLine,
       thinLine,
       size,
-      'v\u208d(t)=${data.vC} sin(2\u03c0${data.fC}t + ${data.thetaC})',
       stopT,
       sampleRate,
       minorTicPoints,
@@ -273,7 +200,6 @@ class _AmPainter extends CustomPainter {
       thickLine,
       thinLine,
       size,
-      'v\u2090\u2098(t)=${data.vC} sin(2\u03c0 ${data.fC}t) + ${data.vM / 2} sin(2\u03c0 ${data.fC - data.fM}t)  + ${data.vM / 2} sin(2\u03c0 ${data.fC + data.fM}t)',
       stopT,
       sampleRate,
       minorTicPoints,
@@ -284,11 +210,17 @@ class _AmPainter extends CustomPainter {
     for (double t = 0; t <= stopT; t += 1 / sampleRate) {
       double i = t * points / stopT + border;
       double vm =
-          data.vM * sin(2.0 * pi * data.fM * t + data.thetaM * pi / 180);
-      double vc = sin(2.0 * pi * data.fC * t + data.thetaC * pi / 180);
-      double v = -10 * (data.vC + vm) * vc;
+          data.modulator.amplitude *
+          sin(
+            2.0 * pi * data.modulator.frequency * t +
+                data.modulator.phase * pi / 180,
+          );
+      double vc = sin(
+        2.0 * pi * data.carrier.frequency * t + data.carrier.phase * pi / 180,
+      );
+      double v = -10 * (data.carrier.amplitude + vm) * vc;
       var currm = Offset(i, -10 * vm + mPos);
-      var currc = Offset(i, -10 * data.vC * vc + cPos);
+      var currc = Offset(i, -10 * data.carrier.amplitude * vc + cPos);
       var curram = Offset(i, v + amPos);
       if (i == border) {
         lastm = currm;
@@ -316,7 +248,6 @@ class _AmPainter extends CustomPainter {
     Paint thickLine,
     Paint thinLine,
     Size size,
-    String xlabel,
     double stopT,
     double sampleRate,
     double minorTicPoints,
@@ -343,7 +274,7 @@ class _AmPainter extends CustomPainter {
           textDirection: TextDirection.ltr,
         );
         tp.layout(minWidth: 30, maxWidth: size.width);
-        tp.paint(canvas, Offset(i - 10, pos + 10 * 11));
+        tp.paint(canvas, Offset(i - 4, pos + 10 * 11));
         tp.dispose();
       } else {
         canvas.drawLine(p1, p2, thinLine);
@@ -380,16 +311,6 @@ class _AmPainter extends CustomPainter {
       Offset(size.width - border, pos),
       axis,
     );
-    TextSpan span = TextSpan(
-      style: TextStyle(
-        fontStyle: FontStyle.italic,
-        color: Color.fromARGB(255, 0, 34, 91),
-      ),
-      text: xlabel,
-    );
-    TextPainter tp = TextPainter(text: span, textDirection: TextDirection.ltr);
-    tp.layout(minWidth: 30, maxWidth: size.width);
-    tp.paint(canvas, Offset(50, pos - 10 * 13));
   }
 
   void drawFreqAxis(

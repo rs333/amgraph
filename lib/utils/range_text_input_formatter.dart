@@ -12,7 +12,7 @@ class RangeTextInputFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     if (newValue.text.isEmpty) {
-      return newValue;
+      return oldValue;
     }
 
     try {
