@@ -1,6 +1,6 @@
 import 'package:amgraph/am_data.dart';
+import 'package:amgraph/range_text_input_formatter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
 
 class SinusoidWidget extends StatelessWidget {
   static const _scaler = TextScaler.linear(1);
@@ -14,6 +14,12 @@ class SinusoidWidget extends StatelessWidget {
     this.textScaler = _scaler,
     this.subscript = '\u2098',
     this.signalName = 'modulating',
+    this.minV = -10,
+    this.maxV = 10,
+    this.minF = 0,
+    this.maxF = 100000,
+    this.minTheta = -360,
+    this.maxTheta = 360,
   });
 
   final TextEditingController vController;
@@ -24,6 +30,13 @@ class SinusoidWidget extends StatelessWidget {
   final String signalName;
 
   final AmData data;
+
+  final double minV;
+  final double maxV;
+  final double minF;
+  final double maxF;
+  final double minTheta;
+  final double maxTheta;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +51,9 @@ class SinusoidWidget extends StatelessWidget {
               fit: FlexFit.loose,
               child: TextField(
                 controller: vController,
+                inputFormatters: [
+                  RangeTextInputFormatter(min: minV, max: maxV),
+                ],
                 decoration: InputDecoration(
                   floatingLabelAlignment: FloatingLabelAlignment.start,
                   floatingLabelStyle: TextStyle(fontStyle: FontStyle.italic),
@@ -54,6 +70,9 @@ class SinusoidWidget extends StatelessWidget {
               fit: FlexFit.loose,
               child: TextField(
                 controller: fController,
+                inputFormatters: [
+                  RangeTextInputFormatter(min: minF, max: maxF),
+                ],
                 decoration: InputDecoration(
                   floatingLabelAlignment: FloatingLabelAlignment.start,
                   floatingLabelStyle: TextStyle(fontStyle: FontStyle.italic),
@@ -70,6 +89,9 @@ class SinusoidWidget extends StatelessWidget {
               fit: FlexFit.loose,
               child: TextField(
                 controller: thetaController,
+                inputFormatters: [
+                  RangeTextInputFormatter(min: minTheta, max: maxTheta),
+                ],
                 decoration: InputDecoration(
                   floatingLabelAlignment: FloatingLabelAlignment.start,
                   floatingLabelStyle: TextStyle(fontStyle: FontStyle.italic),
@@ -85,16 +107,6 @@ class SinusoidWidget extends StatelessWidget {
             Flexible(fit: FlexFit.tight, child: Text('')),
           ],
         ),
-        // Row(
-        //   spacing: _spacing,
-        //   mainAxisAlignment: MainAxisAlignment.center,
-        //   children: [
-        //     SelectableMath.tex(
-        //       'v_$subscript(t)=${vController.text} sin(2\\pi ${fController.text} t + ${thetaController.text} )',
-        //       textScaleFactor: textScaler.scale(1.5),
-        //     ),
-        //   ],
-        // ),
       ],
     );
   }

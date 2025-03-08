@@ -4,7 +4,6 @@ import 'package:amgraph/am_data.dart';
 import 'package:amgraph/sinusoid_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 const graphWidth = 1000.0;
 
@@ -13,6 +12,15 @@ class AmWidget extends StatefulWidget {
 
   @override
   State<AmWidget> createState() => _AmWidgetState();
+}
+
+double inputFilter(double val, double lowLimit, double highLimit) {
+  if (val > highLimit) {
+    val = highLimit;
+  } else if (val < lowLimit) {
+    val = lowLimit;
+  }
+  return val;
 }
 
 class _AmWidgetState extends State<AmWidget> {
@@ -25,6 +33,17 @@ class _AmWidgetState extends State<AmWidget> {
   final _fccontroller = TextEditingController();
   final _thetamcontroller = TextEditingController();
   final _thetaccontroller = TextEditingController();
+
+  @override
+  void dispose() {
+    _vmcontroller.dispose();
+    _fmcontroller.dispose();
+    _vccontroller.dispose();
+    _fccontroller.dispose();
+    _thetamcontroller.dispose();
+    _thetaccontroller.dispose();
+    super.dispose();
+  }
 
   double lowFreq = 0;
   double highFreq = 0;
@@ -45,13 +64,6 @@ class _AmWidgetState extends State<AmWidget> {
       } catch (e) {
         return;
       }
-      if (val > 10) {
-        val = 10;
-        _vmcontroller.text = '10';
-      } else if (val < -10) {
-        val = -10;
-        _vmcontroller.text = '-10';
-      }
       setState(() {
         data.vM = val;
       });
@@ -63,13 +75,6 @@ class _AmWidgetState extends State<AmWidget> {
         val = double.parse(_fmcontroller.text);
       } catch (e) {
         return;
-      }
-      if (val > 2000) {
-        val = 2000;
-        _fmcontroller.text = '2000';
-      } else if (val < 0) {
-        val = 0;
-        _fmcontroller.text = '0';
       }
       setState(() {
         data.fM = val;
@@ -84,13 +89,6 @@ class _AmWidgetState extends State<AmWidget> {
       } catch (e) {
         return;
       }
-      if (val > 10) {
-        val = 10;
-        _vccontroller.text = '10';
-      } else if (val < -10) {
-        val = -10;
-        _vccontroller.text = '-10';
-      }
       setState(() {
         data.vC = val;
       });
@@ -102,13 +100,6 @@ class _AmWidgetState extends State<AmWidget> {
         val = double.parse(_fccontroller.text);
       } catch (e) {
         return;
-      }
-      if (val > 100000) {
-        val = 100000;
-        _fccontroller.text = '100000';
-      } else if (val < 0) {
-        val = 0;
-        _fccontroller.text = '0';
       }
       setState(() {
         data.fC = val;
@@ -123,10 +114,6 @@ class _AmWidgetState extends State<AmWidget> {
       } catch (e) {
         return;
       }
-      if (val > 360 || val < -360) {
-        val = val % 360;
-        _thetaccontroller.text = '$val';
-      }
       setState(() {
         data.thetaC = val;
       });
@@ -138,10 +125,6 @@ class _AmWidgetState extends State<AmWidget> {
         val = double.parse(_thetamcontroller.text);
       } catch (e) {
         return;
-      }
-      if (val > 360 || val < -360) {
-        val = val % 360;
-        _thetamcontroller.text = '$val';
       }
       setState(() {
         data.thetaM = val;
@@ -162,6 +145,7 @@ class _AmWidgetState extends State<AmWidget> {
           fController: _fmcontroller,
           thetaController: _thetamcontroller,
           textScaler: _scaler,
+          maxF: 2000,
         ),
         SinusoidWidget(
           data: data,
@@ -208,7 +192,6 @@ class _AmPainter extends CustomPainter {
     double sampleRate = 44100.0;
     double points = size.width - 2 * border;
     double viewWidth = 0.01;
-    double samples = viewWidth * sampleRate;
     double stopT = viewWidth * points / (graphWidth - 2 * border);
     double minorTicPoints = (graphWidth - 2 * border);
     final thickLine =
@@ -277,7 +260,7 @@ class _AmPainter extends CustomPainter {
       thickLine,
       thinLine,
       size,
-      'v\u208d(t)=${data.vC} sin(2\u03c0${data.fC} + ${data.thetaC})',
+      'v\u208d(t)=${data.vC} sin(2\u03c0${data.fC}t + ${data.thetaC})',
       stopT,
       sampleRate,
       minorTicPoints,
@@ -290,7 +273,7 @@ class _AmPainter extends CustomPainter {
       thickLine,
       thinLine,
       size,
-      'v\u2090\u2098(t)=${data.vC} sin(2\u03c0 ${data.fC} ) + ${data.vM / 2} sin(2\u03c0 ${data.fC - data.fM}t)  + ${data.vM / 2} sin(2\u03c0 ${data.fC + data.fM}t)',
+      'v\u2090\u2098(t)=${data.vC} sin(2\u03c0 ${data.fC}t) + ${data.vM / 2} sin(2\u03c0 ${data.fC - data.fM}t)  + ${data.vM / 2} sin(2\u03c0 ${data.fC + data.fM}t)',
       stopT,
       sampleRate,
       minorTicPoints,
@@ -298,12 +281,8 @@ class _AmPainter extends CustomPainter {
       maxVoltage: 11.0,
     );
     // Draw Vam
-    //for (double i = border; i <= (size.width - border); i += 1 / expand) {
     for (double t = 0; t <= stopT; t += 1 / sampleRate) {
       double i = t * points / stopT + border;
-      // (i - border) /
-      // (100 *
-      //     (size.width - 2 * border)); // Ensures 1 complete cycle at 100Hz
       double vm =
           data.vM * sin(2.0 * pi * data.fM * t + data.thetaM * pi / 180);
       double vc = sin(2.0 * pi * data.fC * t + data.thetaC * pi / 180);
@@ -356,15 +335,16 @@ class _AmPainter extends CustomPainter {
       if ((counter % 10) == 0) {
         canvas.drawLine(p1, p2, thickLine);
         TextSpan span = TextSpan(
-          style: GoogleFonts.notoSansMath(fontStyle: FontStyle.italic),
+          style: TextStyle(color: Color.fromARGB(255, 0, 34, 91)),
           text: '${counter / 10}',
         );
         TextPainter tp = TextPainter(
           text: span,
           textDirection: TextDirection.ltr,
         );
-        tp.layout(minWidth: 0, maxWidth: size.width);
-        tp.paint(canvas, Offset(i - 5, pos + 10 * 11));
+        tp.layout(minWidth: 30, maxWidth: size.width);
+        tp.paint(canvas, Offset(i - 10, pos + 10 * 11));
+        tp.dispose();
       } else {
         canvas.drawLine(p1, p2, thinLine);
       }
@@ -376,16 +356,16 @@ class _AmPainter extends CustomPainter {
       if ((i % 50) == 0) {
         canvas.drawLine(p1, p2, thickLine);
         TextSpan span = TextSpan(
-          style: GoogleFonts.notoSansMath(fontStyle: FontStyle.italic),
-          text: '${i / 10}',
+          style: TextStyle(color: Color.fromARGB(255, 0, 34, 91)),
+          text: '${i != 0 ? -i / 10 : 0}',
         );
         TextPainter tp = TextPainter(
           text: span,
           textDirection: TextDirection.ltr,
           textAlign: TextAlign.right,
         );
-        tp.layout(minWidth: 20, maxWidth: size.width);
-        tp.paint(canvas, Offset(border - 30, pos + i - 9));
+        tp.layout(minWidth: 30, maxWidth: size.width);
+        tp.paint(canvas, Offset(border - 35, pos + i - 9));
       } else {
         canvas.drawLine(p1, p2, thinLine);
       }
@@ -401,11 +381,14 @@ class _AmPainter extends CustomPainter {
       axis,
     );
     TextSpan span = TextSpan(
-      style: GoogleFonts.notoSansMath(fontStyle: FontStyle.italic),
+      style: TextStyle(
+        fontStyle: FontStyle.italic,
+        color: Color.fromARGB(255, 0, 34, 91),
+      ),
       text: xlabel,
     );
     TextPainter tp = TextPainter(text: span, textDirection: TextDirection.ltr);
-    tp.layout(minWidth: 0, maxWidth: size.width);
+    tp.layout(minWidth: 30, maxWidth: size.width);
     tp.paint(canvas, Offset(50, pos - 10 * 13));
   }
 
