@@ -1,11 +1,14 @@
+class Sinusoid {
+  double amplitude = 0;
+  double frequency = 0;
+  double phase = 0;
+  Sinusoid(this.amplitude, this.frequency, this.phase);
+}
+
 class AmData {
-  double vM = 5;
-  double vC = 5;
-  double fM = 100;
-  double fC = 4000;
-  double thetaM = 0;
-  double thetaC = 0;
+  Sinusoid modulator = Sinusoid(5, 100, 0);
   bool showModulator = true;
+  Sinusoid carrier = Sinusoid(5, 4000, 0);
   bool showCarrier = true;
   bool showAm = true;
 }
