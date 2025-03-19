@@ -1,3 +1,5 @@
+import 'package:amgraph/mixins/metadata_mixin.dart';
+import 'package:amgraph/widgets/adc_widget.dart';
 import 'package:amgraph/widgets/am_widget.dart';
 import 'package:flutter/material.dart';
 
@@ -12,7 +14,7 @@ class AmApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AM Simulator App',
+      title: 'Training Aids',
       theme: ThemeData(
         colorScheme: ColorScheme(
           brightness: Brightness.light,
@@ -26,7 +28,7 @@ class AmApp extends StatelessWidget {
           onSurface: Color.fromARGB(255, 0, 34, 91),
         ),
       ),
-      home: const AmAppPage(title: 'AM Simulator App'),
+      home: const AmAppPage(title: 'Training Aids'),
       debugShowCheckedModeBanner: false,
       debugShowMaterialGrid: false,
     );
@@ -43,14 +45,49 @@ class AmAppPage extends StatefulWidget {
 }
 
 class _AmAppPageState extends State<AmAppPage> {
+  Metadata _panel = AdcWidget();
+  late String _title;
+
+  @override
+  void initState() {
+    _title = _panel.heading;
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final List<Metadata> widgetList = [AmWidget(), AdcWidget()];
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: Text('${widget.title} - $_title'),
       ),
-      body: AmWidget(),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.inversePrimary,
+              ),
+              child: const Text("Training Aid Options"),
+            ),
+            for (var i = 0; i < widgetList.length; i++)
+              ListTile(
+                title: Text(widgetList[i].heading),
+                onTap: () {
+                  setState(() {
+                    _panel = widgetList[i];
+                    _title = widgetList[i].heading;
+                  });
+
+                  Navigator.pop(context);
+                },
+              ),
+          ],
+        ),
+      ),
+      body: _panel,
     );
   }
 }

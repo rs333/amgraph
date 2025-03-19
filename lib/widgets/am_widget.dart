@@ -1,13 +1,17 @@
 import 'dart:math';
 import 'package:amgraph/am_data.dart';
+import 'package:amgraph/mixins/metadata_mixin.dart';
 import 'package:amgraph/widgets/sinusoid_input_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
 const graphWidth = 1000.0;
 
-class AmWidget extends StatefulWidget {
-  const AmWidget({super.key});
+class AmWidget extends StatefulWidget with Metadata {
+  AmWidget({super.key}) {
+    label = "AM Widget";
+    heading = "Amplitude Modulation";
+  }
 
   @override
   State<AmWidget> createState() => _AmWidgetState();
